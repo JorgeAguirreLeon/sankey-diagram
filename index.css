@@ -1,0 +1,20 @@
+body {
+  margin: 0;
+}
+
+#main {
+  margin: 20px;
+  width: calc(100% - 40px);
+  height: calc(100vh - 40px);
+}
+
+.transition-path {
+  fill: rgba(20, 20, 20, .15);
+  stroke-width: 1px;
+  stroke: rgba(20, 20, 20, .75);
+}
+
+.contact-data {
+  stroke-width: 2px;
+  stroke: black;
+}
