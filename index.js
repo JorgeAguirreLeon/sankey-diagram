@@ -1,5 +1,5 @@
-const width = 1500;
-const height = 900;
+const width = 1500
+const height = 900
 
 const colors = ['#1f77b4', '#ff7f0e', '#9467bd', '#2ca02c', '#d62728']
 
@@ -13,8 +13,12 @@ const data = [
 
 const keys = ['lead', 'prueba', 'lead_q', 'alumno', 'perdido']
 
+const block_width_proportion = .75
+const block_height_proportion = .6
 
-const svg = d3.select('#main');
+// Dynamic data
+
+const svg = d3.select('#main')
 svg.attr('viewBox', `0 0 ${width} ${height}`)
 
 const content = svg.append('g').classed('content', true)
@@ -33,9 +37,9 @@ for (let index=0; index<divisions; index++) {
   let height_offset = (total_leads - division_total_leads)/total_leads*height/2
   keys.filter(type=> distribution[type] > 0).forEach(type=> {
     const block_height = distribution[type]/total_leads*height
-    const block_width = width/divisions * .5
+    const block_width = width/divisions * block_width_proportion
     division_container.append('path')
-      .attr('d', `M 0 ${height_offset} h ${block_width} v ${block_height*.9} h -${block_width} Z`)
+      .attr('d', `M 0 ${height_offset} h ${block_width} v ${block_height*block_height_proportion} h -${block_width} Z`)
       .attr('fill', colors[keys.indexOf(type)])
     height_offset += block_height
   })
@@ -51,25 +55,24 @@ for (let index=0; index<divisions; index++) {
     next_distribution_offset[type].height_offset = next_height_offset
     next_height_offset += next_distribution[type]/total_leads*height
   })
-  console.log(next_distribution_offset)
 
   let block_height_offset = (total_leads - division_total_leads)/total_leads*height/2
   keys.filter(type=> distribution[type] > 0).forEach(type=> {
     const block_height = distribution[type]/total_leads*height
-    const block_width = width/divisions * .5
+    const block_width = width/divisions * block_width_proportion
     let segment_height_offset = 0
     keys.forEach(next_type=> {
       const total_transition = data.filter(lead=> (lead.length > index+1) && lead[index]===type && lead[index+1]===next_type).length
       if (total_transition === 0) return
-      const segment_height = total_transition / total_leads * height * .9
+      const segment_height = total_transition / total_leads * height * block_height_proportion
 
       division_container.append('path')
         .classed('transition-path', true)
         .attr('d', ()=> {
           const start_x = block_width
-          const end_x = 2*block_width
-          const curve_1_x = 1.75*block_width
-          const curve_2_x = 1.25*block_width
+          const end_x = (1/block_width_proportion)*block_width
+          const curve_1_x = ((5/block_width_proportion + block_width_proportion)/6)*block_width
+          const curve_2_x = ((1/block_width_proportion+block_width_proportion)/2)*block_width
           const start_y = block_height_offset+segment_height_offset
           const end_y = next_distribution_offset[next_type].height_offset + next_distribution_offset[next_type].segment_offset
           const curve_1_y = start_y
