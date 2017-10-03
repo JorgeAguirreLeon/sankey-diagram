@@ -14,10 +14,10 @@ const input = {
   keys: ['lead', 'prueba', 'lead_q', 'alumno', 'perdido'],
   proportions: {
     vertical: .9,
-    horizontal: .75
+    horizontal: .65
   }
 }
 
-const svg_id = '#main'
+const svg_id = 'main'
 
 render_sankey(svg_id, input)

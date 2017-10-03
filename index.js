@@ -5,22 +5,22 @@
  *    data: [Array] -> An array of arrays with the state of each data entry in each state
  *    colors: Array -> List of colors to use for the diagram
  *    keys: Array -> List of keys found in the data. Will be mapped in an orderly fashion to colors
- *    proportions: { vertical, horizontal} -> Data indicating vertical and horizontal spacing with blocks
+ *    proportions: {vertical, horizontal} -> Data indicating vertical and horizontal spacing with blocks
  * }
  */
 function render_sankey(svg_id, {viewbox, data, colors, keys, proportions}) {
 
   // Fetch the SVG as indicated, and set its viewBox attribute.
-  const svg = d3.select('#main')
-  svg.attr('viewBox', `0 0 ${viewbox.width} ${viewbox.height}`)
+  const svg = document.getElementById(svg_id)
+  svg.setAttribute('viewBox', `0 0 ${viewbox.width} ${viewbox.height}`)
 
   // Create a <g> with the content
-  const content = svg
-    .append('g')
-    .classed('content', true)
+  const content = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+  content.setAttribute('class', 'content')
+  svg.appendChild(content)
 
   // A few useful data: divisions for the diagram and max. data per division
-  const SANKEY_DIVISIONS = d3.max(data, d=>d.length)
+  const SANKEY_DIVISIONS = data.reduce((target, current)=> target = Math.max(target, current.length), 1)
   const TOTAL_DATA_AMOUNT = data.length
 
   /*
@@ -37,12 +37,13 @@ function render_sankey(svg_id, {viewbox, data, colors, keys, proportions}) {
     data.filter(d=> d.length > index).forEach(d=> distribution[d[index]]++)
 
     // Also very relevant: Get the total leads for this distribution
-    const DIVISION_TOTAL_LEADS = d3.sum(keys, d=>distribution[d])
+    const DIVISION_TOTAL_LEADS = keys.reduce((total, current)=>total+=distribution[current], 0)
 
     // The division container will be a <g> that will be x-translated so they dont overlap
-    const division_container = content.append('g')
-      .classed(`contact-data contact--${index}`, true)
-      .attr('transform', `translate(${index*viewbox.width/SANKEY_DIVISIONS}, ${0})`)
+    const division_container = document.createElementNS('http://www.w3.org/2000/svg', 'g')
+    division_container.setAttribute('class', `contact-data contact--${index}`)
+    division_container.setAttribute('transform', `translate(${index*viewbox.width/SANKEY_DIVISIONS}, ${0})`)
+    content.appendChild(division_container)
 
     /*
      * The height offset indicates where to place the block
@@ -59,9 +60,10 @@ function render_sankey(svg_id, {viewbox, data, colors, keys, proportions}) {
       const block_width = viewbox.width/SANKEY_DIVISIONS * proportions.horizontal
 
       // Create a new path (a very simple rectangle using the color as fill)
-      division_container.append('path')
-        .attr('d', `M 0 ${height_offset} h ${block_width} v ${block_height*proportions.vertical} h -${block_width} Z`)
-        .attr('fill', colors[keys.indexOf(key)%colors.length])
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+      path.setAttribute('d', `M 0 ${height_offset} h ${block_width} v ${block_height*proportions.vertical} h -${block_width} Z`)
+      path.setAttribute('fill', colors[keys.indexOf(key)%colors.length])
+      division_container.appendChild(path)
 
       // Update the height_offset with this block's height to get the y-axis value for the next block
       height_offset += block_height
@@ -86,7 +88,7 @@ function render_sankey(svg_id, {viewbox, data, colors, keys, proportions}) {
    data.filter(d=> d.length > index+1).forEach(d=> next_distribution[d[index+1]]++)
 
    // We again recalculate the next distribution offset for the blocks taking into account the desire for vertical center
-   const NEXT_DISTRIBUTION_TOTAL = d3.sum(keys, d=>next_distribution[d])
+   const NEXT_DISTRIBUTION_TOTAL = keys.reduce((total, current)=>total+=next_distribution[current], 0)
    let next_height_offset = (TOTAL_DATA_AMOUNT - NEXT_DISTRIBUTION_TOTAL)/TOTAL_DATA_AMOUNT*viewbox.height/2
    keys.filter(key=> next_distribution[key] > 0).forEach(key=> {
      // Note that we do not render the data but store it in the next_distribution_offset array defined earlier
@@ -115,9 +117,9 @@ function render_sankey(svg_id, {viewbox, data, colors, keys, proportions}) {
        // We calculate the segment height with the number of elements transitioning from key to next_key
        const segment_height = total_transition / TOTAL_DATA_AMOUNT * viewbox.height * proportions.vertical
        // Create a <path> connecting the segments (part of the block). We've opted for somewhat complex math for a smooth curve
-       division_container.append('path')
-         .classed('transition-path', true)
-         .attr('d', ()=> {
+       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+       path.setAttribute('class', 'transition-path')
+       path.setAttribute('d', (()=> {
            const start_x = block_width
            const end_x = (1/proportions.horizontal)*block_width
            const curve_1_x = ((5/proportions.horizontal + proportions.horizontal)/6)*block_width
@@ -127,11 +129,13 @@ function render_sankey(svg_id, {viewbox, data, colors, keys, proportions}) {
            const curve_1_y = start_y
            const curve_2_y = end_y
            return `M ${start_x} ${start_y} C ${curve_1_x} ${curve_1_y} ${curve_2_x} ${curve_2_y} ${end_x} ${end_y} v ${segment_height} C ${curve_2_x} ${curve_2_y+segment_height} ${curve_1_x} ${curve_1_y+segment_height} ${start_x} ${start_y+segment_height} Z`
-         })
-        // Also set a few additional instruments
-         .attr('data-source', key)
-         .attr('data-destiny', next_key)
-         // Update offset data (both for the division-n block and division-(n+1))
+         })())
+        // Also set a few additional details
+        path.setAttribute('data-source', key)
+        path.setAttribute('data-destiny', next_key)
+       division_container.appendChild(path)
+
+       // Update offset data (both for the division-n block and division-(n+1))
        segment_height_offset += segment_height
        next_distribution_offset[next_key].segment_offset += segment_height
      })
