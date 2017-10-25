@@ -1,4 +1,10 @@
-const input = {
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './index.css';
+import App from './App';
+import registerServiceWorker from './registerServiceWorker';
+
+const props = {
   viewbox: {
     width: 1500,
     height: 900
@@ -18,6 +24,6 @@ const input = {
   }
 }
 
-const svg_id = 'main'
+ReactDOM.render(<App {...props}/>, document.getElementById('root'));
 
-render_sankey(svg_id, input)
+registerServiceWorker();
